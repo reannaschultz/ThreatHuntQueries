@@ -1,0 +1,54 @@
+/* 
+    Copyright (c) 2025 CyberSpeak Labs
+    This Splunk detection query is released under an open-use license.
+    Free to use, modify, and distribute with attribution to CyberSpeak Labs.
+    Threat Actor: UNC3944 (Scattered Spider)
+*/
+
+/* 
+  index subject to change based on environment
+*/
+
+/*
+  Query looks for establishment presence after MFA or credentials have been compromised.
+*/
+
+index=* (
+    (
+        (process_name="powershell.exe" OR process="*powershell*" OR process_name="*.sh") 
+        AND (command_line="*Invoke-WebRequest*" OR command_line="*IEX*" OR command_line="*EncodedCommand*")
+    ) 
+    OR 
+    (
+        (process_name="cmd.exe" OR process="*cmd*") 
+        AND command_line="*net user*"
+    ) 
+    OR 
+    (
+        (process_name="mstsc.exe" OR command_line="*RDP*") 
+        OR (EventCode=4624 AND Logon_Type=10)
+    ) 
+    OR 
+    (
+        (Image="*lsass.exe*" AND CommandLine="*") 
+        OR CommandLine="*mimikatz*"
+    ) 
+    OR 
+    (
+        command_line="*vssadmin delete shadows*" 
+        OR command_line="*bcdedit /set*" 
+        OR command_line="*wbadmin del*"
+    ) 
+    OR 
+    (
+        process_name="rundll32.exe" AND (command_line="*javascript*" OR command_line="*.js"
+    ) 
+    OR 
+    (
+        dest_domain IN ("*.okta.com", "*.duo.com", "*.azure.com", "*office.com") 
+        AND http_user_agent="*curl*" 
+        OR http_user_agent="*python-requests*"
+    )
+)
+| stats count by _time, host, user, process_name, command_line, dest, src_ip
+| sort -_time
