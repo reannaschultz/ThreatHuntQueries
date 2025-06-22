@@ -1,0 +1,94 @@
+from datetime import datetime
+import uuid
+import json
+
+def generate_attack_pattern(technique_id, name, url_suffix):
+    return [
+        {
+            "type": "attack-pattern",
+            "id": f"attack-pattern--{uuid.uuid4()}",
+            "name": name,
+            "external_references": [
+                {
+                    "source_name": "mitre-attack",
+                    "external_id": technique_id,
+                    "url": f"https://attack.mitre.org/techniques/{url_suffix}/"
+                }
+            ]
+        },
+        {
+            "type": "relationship",
+            "id": f"relationship--{uuid.uuid4()}",
+            "relationship_type": "uses",
+            "source_ref": intrusion_set_id,
+            "target_ref": f"attack-pattern--{uuid.uuid4()}",
+            "description": f"UNC3944 uses {name}.",
+            "created": timestamp,
+            "modified": timestamp
+        }
+    ]
+
+timestamp = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.000Z")
+bundle_id = f"bundle--{uuid.uuid4()}"
+intrusion_set_id = f"intrusion-set--{uuid.uuid4()}"
+marking_definition_id = f"marking-definition--{uuid.uuid4()}"
+
+techniques = [
+    ("T1078.004", "Valid Accounts: Cloud Accounts", "T1078/004"),
+    ("T1566.001", "Phishing: Spearphishing Attachment", "T1566/001"),
+    ("T1556.003", "Modify Authentication Process: Web Portal", "T1556/003"),
+    ("T1021.001", "Remote Services: Remote Desktop Protocol", "T1021/001"),
+    ("T1546.008", "Logon Autostart Execution: LSASS Authentication Packages", "T1546/008"),
+    ("T1562.001", "Impair Defenses: Disable or Modify Tools", "T1562/001"),
+    ("T1059.001", "Command and Scripting Interpreter: PowerShell", "T1059/001"),
+    ("T1490", "Inhibit System Recovery", "T1490"),
+    ("T1486", "Data Encrypted for Impact", "T1486")
+]
+
+bundle = {
+    "type": "bundle",
+    "id": bundle_id,
+    "spec_version": "2.1",
+    "objects": [
+        {
+            "type": "marking-definition",
+            "id": marking_definition_id,
+            "created": timestamp,
+            "definition_type": "statement",
+            "definition": {
+                "statement": "This MITRE ATT&CK mapping for UNC3944 (Scattered Spider). CyberSpeak Labs allows for public and commercial use with attribution."
+            }
+        },
+        {
+            "type": "intrusion-set",
+            "spec_version": "2.1",
+            "id": intrusion_set_id,
+            "created": timestamp,
+            "modified": timestamp,
+            "name": "UNC3944",
+            "aliases": ["Scattered Spider", "0ktapus", "Star Fraud", "Octo Tempest", "Scatter Swine", "Muddled Libra", "the Community", "the Com"],
+            "description": "UNC3944 is a financially motivated intrusion set known for SIM swapping, phishing, and identity-based cloud attacks.",
+            "external_references": [
+                {
+                    "source_name": "mitre-attack",
+                    "url": "https://attack.mitre.org/groups/G1004/",
+                    "external_id": "G1004"
+                }
+            ],
+            "object_marking_refs": [marking_definition_id],
+            "labels": ["cyberspeak-labs", "open-use", "unc3944", "scattered-spider"]
+        }
+    ]
+}
+
+for technique in techniques:
+    attack_pattern_objs = generate_attack_pattern(*technique)
+    bundle["objects"].extend(attack_pattern_objs)
+
+json_data = json.dumps(bundle, indent=2)
+file_path = "/mnt/data/UNC3944_CSL_MITRE_Mappings.json"
+
+with open(file_path, "w") as f:
+    f.write(json_data)
+
+file_path
